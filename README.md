@@ -1,7 +1,7 @@
 # Analytics Group — Website Chatbot
 
 A guided chatbot for [analyticsgroup.co.za](https://analyticsgroup.co.za/) that helps site
-visitors understand AG's services and points warm leads to a consultation. Built with  *FastAPI backend and a React (Vite) frontend
+visitors understand AG's services and points warm leads to a consultation. 
 ## What it does
 
 - Greets visitors and explains what Analytics Group does.
