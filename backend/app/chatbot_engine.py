@@ -11,6 +11,15 @@ Design:
   and 100% grounded in the company's real content (no hallucination risk).
   The engine is isolated in this module, so swapping in an LLM-backed
   implementation later only means editing this file.
+
+Service answers:
+- knowledge_base.SERVICES entries carry `name` and `summary` (required,
+  used everywhere — menus, scoring) plus optional deep-dive fields:
+  `definition`, `business_value`, `ag_role`, `deliverables`, `ideal_for`.
+- _format_service() always leads with `summary`, then layers in whichever
+  of those optional fields are present, so a service missing some of them
+  still renders cleanly. Every full answer explicitly covers what the
+  service is, how it helps the business, and how AG delivers it.
 """
 import re
 from typing import List, Tuple
@@ -57,11 +66,48 @@ def _service_menu_text() -> str:
 
 
 def _format_service(key: str) -> Tuple[str, List[QuickReply]]:
+    """
+    Build the full answer for a single service.
+
+    Always includes `name` + `summary` (guaranteed fields). Then, if
+    present, layers in:
+      - definition       -> what the service actually is
+      - business_value   -> how it helps the business (bulleted)
+      - ag_role          -> how AG specifically delivers/assists with it
+      - deliverables     -> concrete outputs the client receives
+    so every service answer covers "what it is", "how it helps businesses",
+    and "how AG helps" in one reply, as required by the bot's brief.
+    """
     service = SERVICES[key]
-    text = (
-        f"**{service['name']}**\n{service['summary']}\n\n"
-        "Would you like to request a consultation about this, or see another service?"
-    )
+
+    parts = [f"**{service['name']}**", service["summary"]]
+
+    definition = service.get("definition")
+    if definition:
+        parts.append(f"\n**What it is:**\n{definition}")
+
+    business_value = service.get("business_value")
+    if business_value:
+        bullet_lines = "\n".join(f"✅ {point}" for point in business_value)
+        parts.append(f"\n**How it helps your business:**\n{bullet_lines}")
+
+    ag_role = service.get("ag_role")
+    if ag_role:
+        parts.append(f"\n**How Analytics Group (AG) helps:**\n{ag_role}")
+
+    deliverables = service.get("deliverables")
+    if deliverables:
+        deliverable_lines = "\n".join(f"📦 {item}" for item in deliverables)
+        parts.append(f"\n**What you get:**\n{deliverable_lines}")
+
+    ideal_for = service.get("ideal_for")
+    if ideal_for:
+        parts.append(f"\n**Best fit for:** {ideal_for}")
+
+    parts.append("\nWould you like to request a consultation about this, or see another service?")
+
+    text = "\n".join(parts)
+
     quick_replies = [
         ("Request a Consultation", f"menu_consultation_{key}"),
         ("See Other Services", "menu_services"),
