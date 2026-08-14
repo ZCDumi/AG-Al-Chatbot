@@ -4,8 +4,7 @@ Knowledge base for the Analytics Group chatbot.
 Content sourced from https://analyticsgroup.co.za/ (About, Services, Stats, Contact),
 expanded with fuller service definitions, business value, and AG's role in delivery.
 
-Kept as plain Python data structures so it's easy to edit without touching
-the matching logic in chatbot_engine.py.
+Kept as plain Python data structures so it's easy to edit
 
 
 """
