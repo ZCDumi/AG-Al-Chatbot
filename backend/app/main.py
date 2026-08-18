@@ -46,6 +46,22 @@ def _to_quick_reply_schema(pairs):
 @app.get("/", tags=["health"])
 def root():
     return {"status": "ok", "service": "Analytics Group Chatbot API"}
+    
+@app.get("/debug/tables", tags=["health"])
+def debug_tables():
+    """Inspect the SQLite schema — lists tables and their columns."""
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+
+    result = {}
+    for table in tables:
+        columns = inspector.get_columns(table)
+        result[table] = [
+            {"name": col["name"], "type": str(col["type"])}
+            for col in columns
+        ]
+
+    return {"tables": result}
 
 
 @app.post("/api/chat/start", response_model=schemas.MessageResponse, tags=["chat"])
