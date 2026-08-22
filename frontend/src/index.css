@@ -1,0 +1,52 @@
+:root {
+  /* Alchemy-of-data palette: deep ink base transmuting into burnished gold insight */
+  --ink-950: #0a1626;
+  --ink-900: #0e1c30;
+  --ink-800: #16283f;
+  --ink-700: #203450;
+  --ink-600: #324a6b;
+  --mist-300: #93a2b8;
+  --mist-100: #cbd4e1;
+  --paper: #edeff2;
+  --gold-500: #d4a24c;
+  --gold-400: #e6bc74;
+  --teal-500: #3fa9a0;
+  --danger: #d96c6c;
+
+  --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-body: "Inter", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink-950);
+  color: var(--paper);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+}
