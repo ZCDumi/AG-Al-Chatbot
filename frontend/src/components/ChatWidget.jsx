@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import "./ChatWidget.css";
 
 // In dev, Vite proxies /api -> http://localhost:8000 (see vite.config.js).
@@ -60,7 +60,16 @@ function wantsLeadForm(intent) {
   return intent === "consultation_request" || intent === "menu_consultation";
 }
 
-export default function ChatWidget() {
+// Hero CTAs (or any other button on the page) can jump straight into a
+// specific part of the chat. Each entry maps to the same (label, payload)
+// pair used by the matching in-chat quick reply, so the bot's response is
+// identical either way.
+const INTENT_QUICK_REPLIES = {
+  consultation: { label: "Request a Consultation", payload: "menu_consultation" },
+  services: { label: "Our Services", payload: "menu_services" },
+};
+
+const ChatWidget = forwardRef(function ChatWidget(props, ref) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [quickReplies, setQuickReplies] = useState([]);
@@ -68,6 +77,7 @@ export default function ChatWidget() {
   const [sessionId, setSessionId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [bootstrapped, setBootstrapped] = useState(false);
+  const [pendingIntent, setPendingIntent] = useState(null);
 
   const [leadFormOpen, setLeadFormOpen] = useState(false);
   const [lead, setLead] = useState(EMPTY_LEAD);
@@ -75,6 +85,15 @@ export default function ChatWidget() {
   const [leadSubmitting, setLeadSubmitting] = useState(false);
 
   const bodyRef = useRef(null);
+
+  // Exposes ChatWidget.openWithIntent("consultation" | "services") to
+  // parent components (e.g. the hero CTAs in App.jsx) via a ref.
+  useImperativeHandle(ref, () => ({
+    openWithIntent(intent) {
+      setOpen(true);
+      setPendingIntent(intent);
+    },
+  }));
 
   useEffect(() => {
     if (open && !bootstrapped) {
@@ -108,6 +127,20 @@ export default function ChatWidget() {
       bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
     }
   }, [messages, isTyping, leadFormOpen]);
+
+  // Once the widget has bootstrapped (welcome message + session_id back
+  // from the backend), play the queued hero-CTA intent as if the visitor
+  // had tapped that quick reply themselves.
+  useEffect(() => {
+    if (bootstrapped && pendingIntent) {
+      const target = INTENT_QUICK_REPLIES[pendingIntent];
+      setPendingIntent(null);
+      if (target) {
+        sendMessage(target.label, target.payload);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bootstrapped, pendingIntent]);
 
   // displayText is what shows in the chat bubble; sendText is what actually
   // gets sent to the backend as `text` (quick replies send their payload,
@@ -358,4 +391,6 @@ export default function ChatWidget() {
       )}
     </>
   );
-}
+});
+
+export default ChatWidget;
