@@ -263,7 +263,8 @@ def handle_payload(payload: str) -> Tuple[str, str, List[QuickReply]]:
     if payload.startswith("service_"):
         key = payload.replace("service_", "", 1)
         if key in SERVICES:
-            return _format_service(key)
+            reply, qr = _format_service(key)
+            return reply, f"service_{key}", qr
 
     # Unknown payload -> fall back to main menu
     reply, qr = welcome_message()
