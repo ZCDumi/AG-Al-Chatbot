@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import "./App.css";
 import ChatWidget from "./components/ChatWidget.jsx";
 
@@ -18,6 +19,8 @@ const SERVICES = [
 ];
 
 export default function App() {
+  const chatRef = useRef(null);
+
   return (
     <div className="page">
       <nav className="nav">
@@ -43,8 +46,12 @@ export default function App() {
         </p>
         <p className="quote">&ldquo;In God we trust. All others must bring data.&rdquo;</p>
         <div className="cta-row">
-          <button className="btn-gold">Book a consultation</button>
-          <button className="btn-ghost">Explore services</button>
+          <button className="btn-gold" onClick={() => chatRef.current?.openWithIntent("consultation")}>
+            Book a consultation
+          </button>
+          <button className="btn-ghost" onClick={() => chatRef.current?.openWithIntent("services")}>
+            Explore services
+          </button>
         </div>
       </header>
 
@@ -70,7 +77,7 @@ export default function App() {
       </section>
 
       {/* Floating assistant, ready to guide any visitor through the above */}
-      <ChatWidget />
+      <ChatWidget ref={chatRef} />
     </div>
   );
 }
