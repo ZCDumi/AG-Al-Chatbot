@@ -1,21 +1,20 @@
 """
 Database configuration for the Analytics Group chatbot.
 
-Uses SQLite as the storage engine, SQLAlchemy as the ORM layer.
-The SQLite file is created automatically on first run at backend/chatbot.db
+Connects directly to the local PostgreSQL database (ag_chatbot).
+Connection pooling is enabled for real concurrent traffic.
 """
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'chatbot.db')}"
+SQLALCHEMY_DATABASE_URL = "postgresql://aguser:devpassword@localhost:5432/ag_chatbot"
 
-# check_same_thread=False is required because FastAPI can access the
-# connection from different threads within the same request lifecycle.
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
