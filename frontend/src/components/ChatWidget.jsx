@@ -280,10 +280,12 @@ const ChatWidget = forwardRef(function ChatWidget(props, ref) {
       {open && (
         <div className="cw-panel" role="dialog" aria-label="Analytics Group chat assistant">
           <div className="cw-header">
-            <div className="cw-avatar">AG</div>
+            <div className="cw-avatar">
+              AG<span>.</span>
+            </div>
             <div className="cw-header-text">
               <div className="name">Analytics Group Assistant</div>
-              <div className="status">Online &middot; usually replies instantly</div>
+              <div className="status">Online</div>
             </div>
             <button className="cw-close" onClick={() => setOpen(false)} aria-label="Close chat">
               <CloseIcon />
