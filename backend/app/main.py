@@ -3,7 +3,7 @@ Analytics Group Chatbot API
 ============================
 FastAPI backend that powers the website chatbot: guides visitors through
 Analytics Group's services, answers questions, and captures consultation
-requests ("leads") into SQLite via SQLAlchemy, validated with Pydantic.
+requests ("leads") .
 
 Run with:
     uvicorn app.main:app --reload --port 8000
@@ -15,6 +15,7 @@ from typing import List
 
 from . import models, schemas, crud, chatbot_engine
 from .database import engine, get_db
+from .auth import authenticate_staff, create_access_token, get_current_staff_user
 
 # Create tables on startup (fine for SQLite + this project's scale;
 # for production migrations, use Alembic instead).
@@ -32,8 +33,6 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -48,7 +47,7 @@ def _to_quick_reply_schema(pairs):
 @app.get("/", tags=["health"])
 def root():
     return {"status": "ok", "service": "Analytics Group Chatbot API"}
-    
+
 @app.get("/debug/tables", tags=["health"])
 def debug_tables():
     """Inspect the SQLite schema — lists tables and their columns."""
@@ -123,15 +122,72 @@ def submit_lead(lead_in: schemas.LeadCreate, db: Session = Depends(get_db)):
     lead = crud.create_lead(db, session, lead_in)
 
     confirmation = (
-            "Thanks, {lead.name}! We've received your details and someone from the "
-        "Analytics Group team will be in touch shortly at " + lead.email + "."
+        f"Thanks, {lead.name}! We've received your details and someone from the "
+        f"Analytics Group team will be in touch shortly at {lead.email}."
     )
     crud.add_message(db, session.id, sender="bot", text=confirmation, intent="lead_captured")
 
     return lead
 
 
-@app.get("/api/leads", response_model=List[schemas.LeadOut], tags=["leads"])
-def get_leads(db: Session = Depends(get_db)):
-    """Internal endpoint for Analytics Group staff to view captured leads."""
-    return crud.list_leads(db)
+@app.post("/api/auth/login", response_model=schemas.TokenResponse, tags=["auth"])
+def login(credentials: schemas.LoginRequest, db: Session = Depends(get_db)):
+    """
+    Staff login. Exchange a username + password for a short-lived JWT,
+    used as a Bearer token on protected endpoints (currently GET /api/leads
+    and GET /api/leads/access-log).
+
+    Staff accounts are created via the `create_staff.py` CLI script, not
+    through the API — there is no public sign-up endpoint.
+    """
+    staff = authenticate_staff(db, credentials.username, credentials.password)
+    if not staff:
+        # Same error for "no such user" and "wrong password" — don't leak
+        # which one it was.
+        raise HTTPException(status_code=401, detail="Incorrect username or password.")
+
+    token, expires_in = create_access_token(staff.username)
+    return schemas.TokenResponse(access_token=token, expires_in=expires_in)
+
+
+@app.get(
+    "/api/leads",
+    response_model=List[schemas.LeadOut],
+    tags=["leads"],
+)
+def get_leads(
+    db: Session = Depends(get_db),
+    current_staff: models.StaffUser = Depends(get_current_staff_user),
+):
+    """
+    Internal endpoint for Analytics Group staff to view captured leads.
+
+    Protected: requires a valid staff login (Authorization: Bearer <JWT>
+    from POST /api/auth/login). Contains visitor contact details (name,
+    email, phone) so it must not be publicly readable — POST /api/leads
+    stays open since that's the public-facing lead-capture form, but
+    reading the list back is staff-only.
+
+    Every successful call is recorded in the lead_access_logs table with
+    the requesting staff member's username and a timestamp, so there's a
+    real audit trail of who viewed the leads list and when.
+    """
+    leads = crud.list_leads(db)
+    crud.log_lead_access(db, staff_username=current_staff.username, lead_count=len(leads))
+    return leads
+
+
+@app.get(
+    "/api/leads/access-log",
+    response_model=List[schemas.LeadAccessLogOut],
+    tags=["leads"],
+)
+def get_lead_access_log(
+    db: Session = Depends(get_db),
+    current_staff: models.StaffUser = Depends(get_current_staff_user),
+):
+    """
+    Audit trail: every staff member who has viewed the leads list, and when.
+    Also staff-only — logged in as any active staff account.
+    """
+    return crud.list_lead_access_logs(db)
