@@ -73,3 +73,37 @@ class LeadOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ---------- Staff auth ----------
+
+class LoginRequest(BaseModel):
+    username: str = Field(..., min_length=1, max_length=80)
+    password: str = Field(..., min_length=1, max_length=200)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int  # seconds until the token expires
+
+
+class StaffUserOut(BaseModel):
+    id: int
+    username: str
+    full_name: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LeadAccessLogOut(BaseModel):
+    id: int
+    staff_username: str
+    accessed_at: datetime
+    lead_count_returned: Optional[int] = None
+
+    class Config:
+        from_attributes = True
