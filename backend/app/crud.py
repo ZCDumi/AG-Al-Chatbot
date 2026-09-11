@@ -71,3 +71,39 @@ def create_lead(db: Session, session: models.ChatSession, lead_in: schemas.LeadC
 
 def list_leads(db: Session) -> list[models.Lead]:
     return db.query(models.Lead).order_by(models.Lead.created_at.desc()).all()
+
+
+def get_staff_by_username(db: Session, username: str) -> models.StaffUser | None:
+    return (
+        db.query(models.StaffUser)
+        .filter(models.StaffUser.username == username)
+        .first()
+    )
+
+
+def create_staff_user(
+    db: Session, username: str, hashed_password: str, full_name: str | None = None
+) -> models.StaffUser:
+    staff = models.StaffUser(
+        username=username, hashed_password=hashed_password, full_name=full_name
+    )
+    db.add(staff)
+    db.commit()
+    db.refresh(staff)
+    return staff
+
+
+def log_lead_access(db: Session, staff_username: str, lead_count: int) -> models.LeadAccessLog:
+    entry = models.LeadAccessLog(staff_username=staff_username, lead_count_returned=lead_count)
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+def list_lead_access_logs(db: Session) -> list[models.LeadAccessLog]:
+    return (
+        db.query(models.LeadAccessLog)
+        .order_by(models.LeadAccessLog.accessed_at.desc())
+        .all()
+    )
