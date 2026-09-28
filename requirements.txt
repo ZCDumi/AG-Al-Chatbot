@@ -9,9 +9,3 @@ bcrypt	Password hashing for staff accounts
 pyjwt	Issuing and verifying JWT tokens
 
 
-FRONTEND (Node — package.json)
-Package	Purpose
-react	UI library
-react-dom	React rendering for the browser
-vite	Dev server and build tool
-@vitejs/plugin-react	Vite's React plugin (JSX support, fast refresh)
