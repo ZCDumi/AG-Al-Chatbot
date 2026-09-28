@@ -1,11 +1,8 @@
-Package	Purpose BACKEND
-fastapi	Web framework
-uvicorn[standard]	ASGI server that runs the FastAPI app
-sqlalchemy	ORM for database models and queries
-psycopg2-binary	PostgreSQL driver (lets SQLAlchemy talk to Postgres)
-pydantic[email]	Request/response validation, including email format checking for leads
-python-dotenv	Loads backend/.env (needed for JWT_SECRET_KEY, DATABASE_URL)
-bcrypt	Password hashing for staff accounts
-pyjwt	Issuing and verifying JWT tokens
+FRONTEND (Node — package.json)
+Package	Purpose
+react	UI- library
+react-dom	-React rendering for the browser
+vite	Dev- server and build tool
+@vitejs/plugin-react	Vite's React plugin (JSX support, fast refresh)
 
 
