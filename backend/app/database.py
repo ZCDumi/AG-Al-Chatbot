@@ -19,8 +19,6 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://aguser:devpassword@localhost:5432/ag_chatbot",
 )
 
-# Force the psycopg2 driver (SQLAlchemy 2.1 defaults to psycopg v3 otherwise).
-# Handles both "postgres://" and "postgresql://" prefixes from providers.
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
         "postgres://", "postgresql+psycopg2://", 1
